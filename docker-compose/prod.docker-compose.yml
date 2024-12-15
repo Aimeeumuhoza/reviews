@@ -1,0 +1,12 @@
+version: '3.7'
+
+services: 
+    uzuri-shopper-prod:
+        image: registry.gitlab.com/uzuri/uzuri-web/main:latest
+        container_name: uzuri-shopper-prod
+        volumes:
+            - '.:/app'
+            - '/app/node_modules'
+        ports: 
+            - 8018:3000
+        restart: always

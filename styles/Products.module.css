@@ -1,0 +1,307 @@
+.sortIcon {
+  color: #000000;
+}
+.starIconFilled {
+  color: #ffaa00;
+  font-size: 14px !important;
+}
+.starIconOutlined {
+  color: #979fae;
+  font-size: 12px !important;
+}
+.bulletIconBrown_xs {
+  color: #673416 !important;
+  font-size: 12px !important;
+}
+.bulletIconOrange_xs {
+  color: #e38845 !important;
+  font-size: 12px !important;
+}
+.bulletIconBlue_xs {
+  color: #336699 !important;
+  font-size: 12px !important;
+}
+.bulletIcon {
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconBrown {
+  color: #673416 !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconOrange {
+  color: #e38845 !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconBlue {
+  color: #336699 !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconRed {
+  color: #df6868 !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconYellow {
+  color: #efd553 !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconGreen {
+  color: #70b549 !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconBlack {
+  color: #000000 !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconPink {
+  color: #ef84da !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconPurple {
+  color: #a845bf !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconGray {
+  color: #979fae !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconDarkGreen {
+  color: #59735a !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconWhite {
+  color: #ffffff !important;
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  border: 1px solid #d0d8e8;
+  border-radius: 50%;
+  margin-bottom: 8px !important;
+}
+
+.bulletIconFilter {
+  font-size: 12px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+.bulletIconMultiple {
+  background: transparent
+    linear-gradient(180deg, #0cd2e9 0%, #df0e7d 37%, #10eb54 71%, #d98313 100%) 0% 0% no-repeat
+    padding-box;
+  color: transparent;
+  border-radius: 50%;
+  font-size: 10px !important;
+  margin-right: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.itemCard {
+  padding: 0px;
+  /* border: 1px solid #d0d8e8; */
+  border-radius: 4px;
+  cursor: pointer !important;
+}
+.itemImage {
+  height: 320px !important;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.173);
+  object-position: bottom !important;
+}
+.itemImageOrder {
+  height: 120px !important;
+  width: 120px !important;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #d0d8e8;
+}
+.itemImageReview {
+  height: 120px !important;
+  width: 120px !important;
+  border-radius: 4px;
+  object-fit: cover;
+}
+.itemRow {
+  margin-bottom: 0px !important;
+}
+
+.checkboxIcon {
+  font-size: 10px !important;
+  color: #979fae;
+  width: 10px;
+}
+.outOfStock {
+  background-color: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 10px;
+  padding: 8px 16px;
+  position: absolute;
+  border-radius: 0 2px 2px 0;
+  left: 0;
+  bottom: 32px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.discountBadge {
+  background-color: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 15px;
+  padding: 8px 16px;
+  position: absolute;
+  border-radius: 0 2px 2px 0;
+  left: 0;
+  top: 0px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.discountBadg {
+  background-color: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 14px;
+  padding: 4px 16px;
+  position: absolute;
+  border-radius: 0 2px 2px 0;
+  right: 15px;
+  top: -30px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.zoomItemImage {
+  border-radius: 4px;
+  border: 1px solid #d0d8e8;
+  object-fit: cover;
+  margin-bottom: 16px !important;
+  aspect-ratio: 1 / 1;
+}
+
+.zoomItemImage:hover {
+  background-color: #000;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.mainItemImage {
+  /* height: 460px; */
+  border-radius: 4px;
+  border: 1px solid #d0d8e8;
+  object-fit: cover;
+  aspect-ratio: 1 / 1 !important;
+}
+
+.brown {
+  color: #673416 !important;
+}
+.kaki {
+  color: #f0e68c !important;
+}
+.orange {
+  color: #e38845 !important;
+}
+.blue {
+  color: #336699 !important;
+}
+.red {
+  color: #df6868 !important;
+}
+.yellow {
+  color: #efd553 !important;
+}
+.green {
+  color: #70b549 !important;
+}
+.black {
+  color: #000000 !important;
+}
+.pink {
+  color: #ef84da !important;
+}
+.purple {
+  color: #a845bf !important;
+}
+.gray {
+  color: #979fae !important;
+}
+.rust {
+  color: #ff4000 !important;
+}
+.tan {
+  color:#bf8040 !important;
+}
+.bronze {
+  color:#b36b00 !important;
+}
+.aquamarine {
+  color:#0080ff !important;
+}
+.darkGreen {
+  color: #59735a !important;
+}
+.white {
+  color: #ffffff !important;
+
+  border: 1px solid #d0d8e8;
+  border-radius: 50%;
+}
+.multipleColor {
+  background: transparent
+    linear-gradient(180deg, #0cd2e9 0%, #df0e7d 37%, #10eb54 71%, #d98313 100%) 0% 0% no-repeat
+    padding-box;
+  color: transparent;
+  border-radius: 50%;
+  font-size: 24px !important;
+}
+
+.starIconFilledLarge {
+  color: #ffaa00;
+  font-size: 24px !important;
+}
+.starIconOutlinedLarge {
+  color: #979fae;
+  font-size: 24px !important;
+}
+.wishlisted_item {
+  border-bottom: 1px solid #f4f6f9 !important;
+  padding: 42px 0 32px 0 !important;
+}
+
+/*MOBILE VIEW*/
+
+@media (max-width: 767px) {
+  .itemCard {
+    margin-bottom: 16px !important;
+    margin-top: 16px !important;
+  }
+  .itemImage {
+    height: 256px !important;
+  }
+  .zoomItemImage {
+    margin-right: 16px !important;
+    margin-top: 16px !important;
+  }
+  .itemImageOrder {
+    height: 156px !important;
+    width: 156px !important;
+  }
+}

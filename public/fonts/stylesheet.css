@@ -1,0 +1,18 @@
+@font-face {
+    font-family: '718';
+    src: url('SevenOneEight-Light.woff2') format('woff2'),
+        url('SevenOneEight-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: '718';
+    src: url('SevenOneEight-ExtraBold.woff2') format('woff2'),
+        url('SevenOneEight-ExtraBold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+

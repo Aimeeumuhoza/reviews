@@ -1,0 +1,202 @@
+stages:
+  #This stage will consist of 3 different jobs (Build,Lint and Test)
+  - check
+  - docker_build
+  - deploy
+
+#Image to be used while building
+image: docker:git
+services:
+  - docker:dind
+
+variables:
+  BASE_TAG_NAME: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG
+  NODE_IMAGE_VERSION: node:15-alpine3.12
+  BASE_DEV_SERVER_PATH: /home/uzuridev/uzuri/shopper/dev
+  BASE_STG_SERVER_PATH: /home/uzuridev/uzuri/shopper/staging
+  BASE_PROD_SERVER_PATH: /home/uzuriprod/uzuri/shopper
+  DEV_PROJECT_NAME: uzuri-shopper-dev
+  STG_PROJECT_NAME: uzuri-shopper-stg
+  PROD_PROJECT_NAME: uzuri-shopper-prod
+
+# This folder is cached between builds
+# http://docs.gitlab.com/ce/ci/yaml/README.html#cache
+cache:
+  untracked: true
+  paths:
+    - node_modules/
+
+#Jobs to be run
+
+#This job help us build/create an artifact
+Build_the_project:
+  stage: check
+  #Specify which image to be considered during build time
+  image: $NODE_IMAGE_VERSION
+  script:
+    - yarn
+    - yarn build
+  artifacts:
+    paths:
+      - node_modules/
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'dev'
+
+#This job ensure our syntax is okay
+eslint:
+  stage: check
+  image: $NODE_IMAGE_VERSION
+  script:
+    - yarn
+    - yarn lint
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'dev'
+
+#This job will run all the available unit test in the project
+run_test:
+  stage: check
+  image: $NODE_IMAGE_VERSION
+  script:
+    - echo "supposed to run test here"
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == 'dev'
+
+#This  job will build the dockerfile to provide a docker image to be pushed inside gitlab registry
+build_docker_file:
+  stage: docker_build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -f Dockerfile.dev --cache-from $BASE_TAG_NAME:latest -t $BASE_TAG_NAME:$CI_COMMIT_SHORT_SHA -t $BASE_TAG_NAME:latest .
+    - docker push $BASE_TAG_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $BASE_TAG_NAME:latest
+  only:
+    - dev
+
+#This job will deploy our application to the development environment and run in a docker container
+deploy_to_dev_environment:
+  stage: deploy
+  script:
+    - 'which ssh-agent || (  apk update  && apk add openssh-client )'
+    - 'which rsync || ( apk update  && apk add rsync  )'
+    - eval $(ssh-agent -s)
+    # Inject the remote's private key
+    - echo "$EC2_DEV_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    # Append keyscan output into known hosts
+    - ssh-keyscan $EC2_DEV_PUBLIC_IP_ADDRESS >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - echo "Deploy to dev environment"
+    - echo $CI_PROJECT_DIR
+    - rsync --rsync-path=/usr/bin/rsync --delete -avuz --exclude=".*" /$CI_PROJECT_DIR/docker-compose/dev.docker-compose.yml $EC2_DEV_USER@$EC2_DEV_PUBLIC_IP_ADDRESS:$BASE_DEV_SERVER_PATH
+    - echo "STARTING DOCKER IMAGE"
+    - ssh $EC2_DEV_USER@$EC2_DEV_PUBLIC_IP_ADDRESS "docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY &&
+      cd $BASE_DEV_SERVER_PATH &&
+      echo NEXT_DEV_PUBLIC_HOSTNAME=$NEXT_DEV_PUBLIC_HOSTNAME > .env &&
+      echo NEXT_DEV_PUBLIC_API_HOST=$NEXT_DEV_PUBLIC_API_HOST >> .env &&
+      echo NEXT_DEV_PUBLIC_NODE_ENV=$NEXT_DEV_PUBLIC_NODE_ENV >> .env &&
+      echo NEXT_DEV_PUBLIC_API_ENDPOINT=$NEXT_DEV_PUBLIC_API_ENDPOINT >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_DB_URL=$NEXT_PUBLIC_FIREBASE_DB_URL >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_PROJECT_BUCKET=$NEXT_PUBLIC_FIREBASE_PROJECT_BUCKET >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID >> .env &&
+      echo NEXT_PUBLIC_GOOGLE_MAP_API_KEY=$NEXT_PUBLIC_GOOGLE_MAP_API_KEY >> .env &&
+      echo NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_URL=$NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_URL >> .env &&
+      echo NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_PRESET=$NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_PRESET >> .env &&
+      echo NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=$NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID >> .env &&
+      echo NEXT_PUBLIC_GEO_LOCATION_API=${NEXT_PUBLIC_GEO_LOCATION_API} >> .env &&
+      echo NEXT_PUBLIC_GOOGLE_MAP_API_KEY=${NEXT_PUBLIC_GOOGLE_MAP_API_KEY} >> .env &&
+      docker image rm -f $BASE_TAG_NAME:latest &&
+      docker pull $BASE_TAG_NAME:latest &&
+      docker-compose -f $BASE_DEV_SERVER_PATH/dev.docker-compose.yml -p  $DEV_PROJECT_NAME down -v &&
+      docker-compose -f $BASE_DEV_SERVER_PATH/dev.docker-compose.yml -p  $DEV_PROJECT_NAME up -d"
+  environment:
+    name: dev
+    url: http://uzuri-shopper.awesomity.rw/
+  only:
+    - dev
+
+#This  job will build the dockerfile to provide a docker image to be pushed inside gitlab registry
+build_stg_docker_file:
+  stage: docker_build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -f Dockerfile.prod --cache-from $BASE_TAG_NAME:latest -t $BASE_TAG_NAME:$CI_COMMIT_SHORT_SHA -t $BASE_TAG_NAME:latest --build-arg NEXT_PUBLIC_HOSTNAME=$NEXT_STG_PUBLIC_HOSTNAME --build-arg NEXT_PUBLIC_API_HOST=$NEXT_STG_PUBLIC_API_HOST --build-arg NEXT_PUBLIC_NODE_ENV=$NEXT_STG_PUBLIC_NODE_ENV --build-arg NEXT_PUBLIC_API_ENDPOINT=$NEXT_STG_PUBLIC_API_ENDPOINT --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN --build-arg NEXT_PUBLIC_FIREBASE_DB_URL=$NEXT_PUBLIC_FIREBASE_DB_URL --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_BUCKET=$NEXT_PUBLIC_FIREBASE_PROJECT_BUCKET --build-arg NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID --build-arg NEXT_PUBLIC_GEO_LOCATION_API=$NEXT_PUBLIC_GEO_LOCATION_API --build-arg NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=$NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID --build-arg NEXT_PUBLIC_GOOGLE_MAP_API_KEY=$NEXT_PUBLIC_GOOGLE_MAP_API_KEY --build-arg NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_URL=$NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_URL --build-arg NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_PRESET=$NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_PRESET .
+    - docker push $BASE_TAG_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $BASE_TAG_NAME:latest
+  only:
+    - staging
+
+#This job will deploy our application to the development environment and run in a docker container
+deploy_to_stg_environment:
+  stage: deploy
+  script:
+    - 'which ssh-agent || (  apk update  && apk add openssh-client )'
+    - 'which rsync || ( apk update  && apk add rsync  )'
+    - eval $(ssh-agent -s)
+    # Inject the remote's private key
+    - echo "$EC2_DEV_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    # Append keyscan output into known hosts
+    - ssh-keyscan $EC2_DEV_PUBLIC_IP_ADDRESS >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - echo "Deploy to staging environment"
+    - echo $CI_PROJECT_DIR
+    - rsync --rsync-path=/usr/bin/rsync --delete -avuz --exclude=".*" /$CI_PROJECT_DIR/docker-compose/stg.docker-compose.yml $EC2_DEV_USER@$EC2_DEV_PUBLIC_IP_ADDRESS:$BASE_STG_SERVER_PATH
+    - echo "STARTING DOCKER IMAGE"
+    - ssh $EC2_DEV_USER@$EC2_DEV_PUBLIC_IP_ADDRESS "docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY &&
+      cd $BASE_STG_SERVER_PATH &&
+      docker image rm -f $BASE_TAG_NAME:latest &&
+      docker pull $BASE_TAG_NAME:latest &&
+      docker-compose -f $BASE_STG_SERVER_PATH/stg.docker-compose.yml -p  $STG_PROJECT_NAME down -v &&
+      docker-compose -f $BASE_STG_SERVER_PATH/stg.docker-compose.yml -p  $STG_PROJECT_NAME up -d"
+  environment:
+    name: staging
+    url: http://beta.uzuriky.com/
+  only:
+    - staging
+
+#This  job will build the dockerfile to provide a docker image to be pushed inside gitlab registry
+build_prod_docker_file:
+  stage: docker_build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build -f Dockerfile.prod --cache-from $BASE_TAG_NAME:latest -t $BASE_TAG_NAME:$CI_COMMIT_SHORT_SHA -t $BASE_TAG_NAME:latest --build-arg NEXT_PUBLIC_HOSTNAME=$NEXT_PROD_PUBLIC_HOSTNAME --build-arg NEXT_PUBLIC_API_HOST=$NEXT_PROD_PUBLIC_API_HOST --build-arg NEXT_PUBLIC_NODE_ENV=$NEXT_PROD_PUBLIC_NODE_ENV --build-arg NEXT_PUBLIC_API_ENDPOINT=$NEXT_PROD_PUBLIC_API_ENDPOINT --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN --build-arg NEXT_PUBLIC_FIREBASE_DB_URL=$NEXT_PUBLIC_FIREBASE_DB_URL --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_BUCKET=$NEXT_PUBLIC_FIREBASE_PROJECT_BUCKET --build-arg NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MSG_SENDER_ID --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID --build-arg NEXT_PUBLIC_GEO_LOCATION_API=$NEXT_PUBLIC_GEO_LOCATION_API --build-arg NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=$NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID --build-arg NEXT_PUBLIC_GOOGLE_MAP_API_KEY=$NEXT_PUBLIC_GOOGLE_MAP_API_KEY --build-arg NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_URL=$NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_URL --build-arg NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_PRESET=$NEXT_PUBLIC_CLOUDINARY_API_UPLOAD_PRESET .
+    - docker push $BASE_TAG_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $BASE_TAG_NAME:latest
+  only:
+    - main
+
+#This job will deploy our application to the development environment and run in a docker container
+deploy_to_prod_environment:
+  stage: deploy
+  script:
+    - 'which ssh-agent || (  apk update  && apk add openssh-client )'
+    - 'which rsync || ( apk update  && apk add rsync  )'
+    - eval $(ssh-agent -s)
+    # Inject the remote's private key
+    - echo "$PROD_DO_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    # Append keyscan output into known hosts
+    - ssh-keyscan $PROD_DO_PUBLIC_IP_ADDRESS >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - echo "Deploy to production environment"
+    - echo $CI_PROJECT_DIR
+    - rsync --rsync-path=/usr/bin/rsync --delete -avuz --exclude=".*" /$CI_PROJECT_DIR/docker-compose/prod.docker-compose.yml $PROD_DO_USER@$PROD_DO_PUBLIC_IP_ADDRESS:$BASE_PROD_SERVER_PATH
+    - echo "STARTING DOCKER IMAGE"
+    - ssh $PROD_DO_USER@$PROD_DO_PUBLIC_IP_ADDRESS "docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY &&
+      cd $BASE_PROD_SERVER_PATH &&
+      docker image rm -f $BASE_TAG_NAME:latest &&
+      docker pull $BASE_TAG_NAME:latest &&
+      docker-compose -f $BASE_PROD_SERVER_PATH/prod.docker-compose.yml -p  $PROD_PROJECT_NAME down -v &&
+      docker-compose -f $BASE_PROD_SERVER_PATH/prod.docker-compose.yml -p  $PROD_PROJECT_NAME up -d"
+  environment:
+    name: production
+    url: http://uzuriky.com/
+  only:
+    - main

@@ -1,0 +1,98 @@
+.arrival_pic {
+  background-position: center !important;
+  background-size: cover !important;
+  border-radius: 2px !important;
+  height: 500%;
+}
+
+.arrival_card {
+  width: 80%;
+  padding: 81px 96px 96px 96px;
+  background-color: rgba(0, 0, 0, 0.4);
+  margin-top: 90px;
+}
+
+.product_card {
+  width: 100%;
+  height: 150px;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  background-size: cover !important;
+  background-position: center !important;
+  cursor: pointer !important;
+}
+
+.product_card .overlay {
+  position: absolute;
+  font-weight: bold;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  display: grid;
+  place-content: center;
+  cursor: pointer !important;
+}
+
+.offPart {
+  background-size: cover !important;
+  background-position: center !important;
+  padding: 48px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.offPart_overlay {
+  width: 100%;
+  height: 300px;
+  padding: 64px 32px;
+  background: rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.best_of {
+  background-size: cover !important;
+  background-position: center !important;
+  padding: 48px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.category_section {
+  padding: 88px 0;
+}
+
+/*MOBILE VIEW*/
+
+@media (max-width: 767px) {
+  .category_section {
+    padding: 32px;
+  }
+  .product_card {
+    margin: 16px 0;
+  }
+  .arrival_card {
+    width: 100%;
+    padding: 81px 96px 96px 96px;
+    background-color: rgba(0, 0, 0, 0.6);
+    margin-top: 20px;
+  }
+  
+  .offPart,
+  .best_of {
+    margin-bottom: 32px;
+  }
+  .offPart_overlay {
+    height: auto;
+  }
+  .itemCard {
+    margin-bottom: 32px !important;
+  }
+  .arrival_card {
+    padding: 24px 32px 32px 32px;
+  }
+}
